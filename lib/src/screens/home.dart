@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:scoped_quiz/src/scoped_models/question_scoped.dart';
@@ -6,127 +9,157 @@ class Home extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.blueGrey[700],
       body: Center(
         child: ScopedModelDescendant<QuestionScoped>(
             builder: (BuildContext context, Widget widget, QuestionScoped model) {
           if (model.questionList.isEmpty) {
             return CircularProgressIndicator();
           }
-          if (model.isCorrect) {
-            return ListView(children: <Widget>[
-              Column(children: <Widget>[
-                Text(model.question.question),
-                model.buttonID == 1 || model.question.answerCorrect == model.question.answerA
-                    ? model.question.answerCorrect == model.question.answerA
-                        ? trueButton(model.question.answerA)
-                        : falseButton(model.question.answerA)
-                    : neutralButton(model.question.answerA),
-                model.buttonID == 2 || model.question.answerCorrect == model.question.answerB
-                    ? model.question.answerCorrect == model.question.answerB
-                        ? trueButton(model.question.answerB)
-                        : falseButton(model.question.answerB)
-                    : neutralButton(model.question.answerB),
-                model.buttonID == 3 || model.question.answerCorrect == model.question.answerC
-                    ? model.question.answerCorrect == model.question.answerC
-                        ? trueButton(model.question.answerC)
-                        : falseButton(model.question.answerC)
-                    : neutralButton(model.question.answerC),
-                model.buttonID == 4 || model.question.answerCorrect == model.question.answerD
-                    ? model.question.answerCorrect == model.question.answerD
-                        ? trueButton(model.question.answerD)
-                        : falseButton(model.question.answerD)
-                    : neutralButton(model.question.answerD),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    model.questionIndex == 0
-                        ? RaisedButton(child: Text("<"), onPressed: null)
-                        : RaisedButton(
-                            child: Text("<"),
-                            onPressed: () {
-                              model.changeQuestion(-1);
-                            },
-                          ),
-                    model.questionList.length - 1 == model.questionIndex
-                        ? RaisedButton(child: Text(">"), onPressed: null)
-                        : RaisedButton(
-                            child: Text(">"),
-                            onPressed: () => model.changeQuestion(1),
+          return Column(
+            children: <Widget>[
+              Expanded(
+                child: Container(
+                  margin: EdgeInsets.only(top: 20.0, left: 20.0, right: 20.0),
+                  child: ListView(children: <Widget>[
+                    //Question Image
+                    model.question.questionImage != null
+                        ? Container(
+                            margin: EdgeInsets.only(bottom: 20.0),
+                            child: Image.memory(
+                              base64.decode(model.question.questionImage),
+                              height: 100.0,
+                              gaplessPlayback: true,
+                            ),
                           )
-                  ],
-                )
-              ])
-            ]);
-          }
-          return ListView(children: <Widget>[
-            Column(children: <Widget>[
-              Text(model.question.question),
-              defaultButton(model.question.answerA, model, 1),
-              defaultButton(model.question.answerB, model, 2),
-              defaultButton(model.question.answerC, model, 3),
-              defaultButton(model.question.answerD, model, 4),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  model.questionIndex == 0
-                      ? RaisedButton(child: Text("<"), onPressed: null)
-                      : RaisedButton(
-                          child: Text("<"),
-                          onPressed: () {
-                            model.changeQuestion(-1);
-                          },
-                        ),
-                  model.questionList.length - 1 == model.questionIndex
-                      ? RaisedButton(child: Text(">"), onPressed: null)
-                      : RaisedButton(
-                          child: Text(">"),
-                          onPressed: () => model.changeQuestion(1),
-                        )
-                ],
-              )
-            ])
-          ]);
+                        : Container(),
+                    //Question
+                    Text(
+                      "${model.questionIndex + 1} - ${model.question.question}",
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16.0,
+                          height: 1.3),
+                    ),
+                    SizedBox(
+                      height: 40.0,
+                    ),
+                    _buildShowButton(model.question.answerA, model, "A"),
+                    SizedBox(
+                      height: 10.0,
+                    ),
+                    _buildShowButton(model.question.answerB, model, "B"),
+                    SizedBox(
+                      height: 10.0,
+                    ),
+                    _buildShowButton(model.question.answerC, model, "C"),
+                    SizedBox(
+                      height: 10.0,
+                    ),
+                    _buildShowButton(model.question.answerD, model, "D"),
+                  ]),
+                ),
+              ),
+              _buildChangeQuestion(model, context),
+            ],
+          );
         }),
       ),
     );
   }
 
-  Widget defaultButton(String answer, QuestionScoped model, int buttonID) {
-    return RaisedButton(
-      child: Text(answer),
-      color: Colors.black54,
-      textColor: Colors.white,
-      onPressed: () {
-        model.showAnswer();
-        model.selectButtonID(buttonID);
-      },
+  Widget _buildChangeQuestion(QuestionScoped model, BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: <Widget>[
+        model.questionIndex == 0
+            ? RaisedButton(child: Text("<"), onPressed: null)
+            : RaisedButton(child: Text("<"), onPressed: () => model.changeQuestion(-1)),
+        model.questionList.length - 1 == model.questionIndex
+            ? RaisedButton(
+                child: Text("Finish"),
+                onPressed: () {
+                  _askedToLead(context, model);
+                })
+            : RaisedButton(child: Text(">"), onPressed: () => model.changeQuestion(1))
+      ],
     );
   }
 
-  Widget trueButton(String answer) {
-    return RaisedButton(
-      child: Text(answer),
-      onPressed: null,
-      disabledColor: Colors.green,
-      disabledTextColor: Colors.white,
+  Future<Null> _askedToLead(BuildContext context, QuestionScoped model) async {
+    await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return new SimpleDialog(
+            title: const Text('Select assignment'),
+            children: <Widget>[
+              Container(
+                  margin: EdgeInsets.all(20.0),
+                  child: Text(
+                    "Correct Number: ${model.correctAnswers}",
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  )),
+              Container(
+                margin: EdgeInsets.all(20.0),
+                child: Text(
+                  "Wrong Number: ${model.wrongAnswers}",
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          );
+        });
+  }
+
+  Widget _buildShowButton(String answer, QuestionScoped model, String buttonNameID) {
+    return InkWell(
+      onTap: model.checkAnswer
+          ? null
+          : () {
+              if (model.question.answerCorrect == buttonNameID) {
+                model.correctAnswers++;
+              } else {
+                model.wrongAnswers++;
+              }
+              model.showAnswer(buttonNameID);
+            },
+      borderRadius: BorderRadius.circular(10.0),
+      child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(10.0),
+          decoration: BoxDecoration(
+              border: Border.all(width: 2.0, color: Colors.black54),
+              borderRadius: BorderRadius.circular(10.0),
+              color: buttonBackground(model, buttonNameID)),
+          child: answer.length < 100
+              ? Container(
+                  padding: EdgeInsets.symmetric(vertical: 10.0),
+                  alignment: Alignment.center,
+                  child: Text(
+                    answer,
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                    textAlign: TextAlign.center,
+                  ),
+                )
+              : Image.memory(
+                  base64.decode(answer),
+                  gaplessPlayback: true,
+                  height: 100.0,
+                )),
     );
   }
 
-  Widget falseButton(String answer) {
-    return RaisedButton(
-      child: Text(answer),
-      onPressed: null,
-      disabledColor: Colors.red,
-      disabledTextColor: Colors.white,
-    );
-  }
-
-  Widget neutralButton(String answer) {
-    return RaisedButton(
-      child: Text(answer),
-      onPressed: null,
-      disabledColor: Colors.black54,
-      disabledTextColor: Colors.white,
-    );
+  Color buttonBackground(QuestionScoped model, String buttonNameID) {
+    if (model.checkAnswer &&
+        (model.buttonID == buttonNameID || buttonNameID == model.question.answerCorrect)) {
+      if (model.question.answerCorrect == buttonNameID) {
+        return Colors.green[800];
+      } else {
+        return Colors.red[800];
+      }
+    } else {
+      return Color(0xDD607d8b);
+    }
   }
 }

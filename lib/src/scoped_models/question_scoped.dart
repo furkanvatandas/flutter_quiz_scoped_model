@@ -7,49 +7,61 @@ import '../models/question_model.dart';
 
 class QuestionScoped extends Model {
   int questionIndex = 0;
-  int buttonID = -1;
-  bool isCorrect = false; // 0-Wrong, 1-Correct, 2-Default
+  int correctAnswers = 0;
+  int wrongAnswers = 0;
+  //buttonID: 1-A, 2-B, 3-C, 4-D
+  String buttonID = "";
+  //When click one of the buttons then triggers checkAnswer
+  bool checkAnswer = false;
+
   Question question;
   List<Question> questionList = [];
-  Map<String, int> buttonIDs = Map<String, int>();
+  Map<String, String> buttonIDMap = Map<String, String>();
 
   Future fetchQuestions() async {
     if (questionList.isEmpty) {
       final jsonData = json.decode(await rootBundle.loadString('assets/questions.json'));
       jsonData.forEach((v) => questionList.add(Question.fromJson(v)));
-      //Show first question
-      showQuestion();
+      getQuestion();
     }
   }
 
-  showQuestion() {
+  /*
+  When click one of the change buttons in home.dart 
+  then triggers changeQuestion()
+  value is for change question index
+  */
+  changeQuestion(int value) {
+    this.questionIndex += value;
+    //if yes, show my answered questions
+    if (buttonIDMap.containsKey("$questionIndex")) {
+      this.buttonID = buttonIDMap["$questionIndex"];
+      checkAnswer = true;
+    }
+    //if no, show my unanswered questions
+    else {
+      checkAnswer = false;
+      buttonID = "";
+    }
+    getQuestion();
+  }
+
+  /*
+  Turns List<Question> to Question model
+  */
+  getQuestion() {
     question = questionList[questionIndex];
     notifyListeners();
   }
 
-  changeQuestion(int value) {
-    this.questionIndex += value;
-    if (buttonIDs.containsKey("$questionIndex")) {
-      this.buttonID = buttonIDs["$questionIndex"];
-      isCorrect = true;
-    } else {
-      print(questionIndex);
-      print((buttonIDs.containsKey("$questionIndex")));
-      isCorrect = false;
-    }
-
-    showQuestion();
-  }
-
-  showAnswer() {
-    isCorrect = true;
-    notifyListeners();
-  }
-
-  void selectButtonID(int id) {
+  /*
+  When click one of the answer buttons in home.dart then triggers showAnswer()
+  then change widgets and show me which one is wrong or correct
+  */
+  showAnswer(String id) {
+    checkAnswer = true;
     this.buttonID = id;
-    buttonIDs["$questionIndex"] = id;
-    print(buttonIDs.length);
+    buttonIDMap["$questionIndex"] = id;
     notifyListeners();
   }
 }
