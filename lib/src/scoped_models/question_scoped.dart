@@ -6,18 +6,26 @@ import 'package:scoped_model/scoped_model.dart';
 import '../models/question_model.dart';
 
 class QuestionScoped extends Model {
+  //"questionIndex" is my questions number and id
   int questionIndex = 0;
   int correctAnswers = 0;
   int wrongAnswers = 0;
-  //buttonID: 1-A, 2-B, 3-C, 4-D
+  //buttonID: A, B, C, D
   String buttonID = "";
-  //When click one of the buttons then triggers checkAnswer
+  //When click one of the buttons then triggers checkAnswer,
+  //so it show me what correct what wrong
   bool checkAnswer = false;
 
   Question question;
   List<Question> questionList = [];
+  //Map is for remember my previous answers 
   Map<String, String> buttonIDMap = Map<String, String>();
 
+
+/*
+  Get questions from "'assets/questions.json" and
+  add "questionList"
+  */
   Future fetchQuestions() async {
     if (questionList.isEmpty) {
       final jsonData = json.decode(await rootBundle.loadString('assets/questions.json'));
@@ -28,8 +36,8 @@ class QuestionScoped extends Model {
 
   /*
   When click one of the change buttons in home.dart 
-  then triggers changeQuestion()
-  value is for change question index
+  then triggers changeQuestion(),
+  "value" is for change question index
   */
   changeQuestion(int value) {
     this.questionIndex += value;

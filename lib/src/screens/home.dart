@@ -19,22 +19,22 @@ class Home extends StatelessWidget {
           return Column(
             children: <Widget>[
               Expanded(
-                child: Container(
-                  margin: EdgeInsets.only(top: 20.0, left: 20.0, right: 20.0),
-                  child: ListView(children: <Widget>[
-                    //Question Image
-                    model.question.questionImage != null
-                        ? Container(
-                            margin: EdgeInsets.only(bottom: 20.0),
-                            child: Image.memory(
-                              base64.decode(model.question.questionImage),
-                              height: 100.0,
-                              gaplessPlayback: true,
-                            ),
-                          )
-                        : Container(),
-                    //Question
-                    Text(
+                child: ListView(children: <Widget>[
+                  //Question Image
+                  model.question.questionImage != null
+                      ? Container(
+                          margin: EdgeInsets.all(20.0),
+                          child: Image.memory(
+                            base64.decode(model.question.questionImage),
+                            height: 100.0,
+                            gaplessPlayback: true,
+                          ),
+                        )
+                      : Container(),
+                  //Question
+                  Container(
+                    margin: EdgeInsets.all(20.0),
+                    child: Text(
                       "${model.questionIndex + 1} - ${model.question.question}",
                       style: TextStyle(
                           color: Colors.white,
@@ -42,24 +42,31 @@ class Home extends StatelessWidget {
                           fontSize: 16.0,
                           height: 1.3),
                     ),
-                    SizedBox(
-                      height: 40.0,
+                  ),
+                  SizedBox(
+                    height: 40.0,
+                  ),
+                  Container(
+                    margin: EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Column(
+                      children: <Widget>[
+                        _buildShowButton(model.question.answerA, model, "A"),
+                        SizedBox(
+                          height: 10.0,
+                        ),
+                        _buildShowButton(model.question.answerB, model, "B"),
+                        SizedBox(
+                          height: 10.0,
+                        ),
+                        _buildShowButton(model.question.answerC, model, "C"),
+                        SizedBox(
+                          height: 10.0,
+                        ),
+                        _buildShowButton(model.question.answerD, model, "D"),
+                      ],
                     ),
-                    _buildShowButton(model.question.answerA, model, "A"),
-                    SizedBox(
-                      height: 10.0,
-                    ),
-                    _buildShowButton(model.question.answerB, model, "B"),
-                    SizedBox(
-                      height: 10.0,
-                    ),
-                    _buildShowButton(model.question.answerC, model, "C"),
-                    SizedBox(
-                      height: 10.0,
-                    ),
-                    _buildShowButton(model.question.answerD, model, "D"),
-                  ]),
-                ),
+                  ),
+                ]),
               ),
               _buildChangeQuestion(model, context),
             ],
@@ -74,34 +81,53 @@ class Home extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: <Widget>[
         model.questionIndex == 0
-            ? RaisedButton(child: Text("<"), onPressed: null)
-            : RaisedButton(child: Text("<"), onPressed: () => model.changeQuestion(-1)),
+            ? RaisedButton(
+                child: Icon(
+                  Icons.chevron_left,
+                ),
+                onPressed: null)
+            : RaisedButton(
+                child: Icon(
+                  Icons.chevron_left,
+                  color: Colors.white,
+                ),
+                color: Colors.blueGrey[300],
+                onPressed: () => model.changeQuestion(-1)),
         model.questionList.length - 1 == model.questionIndex
             ? RaisedButton(
-                child: Text("Finish"),
-                onPressed: () {
-                  _askedToLead(context, model);
-                })
-            : RaisedButton(child: Text(">"), onPressed: () => model.changeQuestion(1))
+                child: Icon(
+                  Icons.done,
+                  color: Colors.white,
+                ),
+                color: Colors.blueGrey[300],
+                onPressed: () => _buildResultsDialog(context, model),
+              )
+            : RaisedButton(
+                child: Icon(
+                  Icons.chevron_right,
+                  color: Colors.white,
+                ),
+                color: Colors.blueGrey[300],
+                onPressed: () => model.changeQuestion(1))
       ],
     );
   }
 
-  Future<Null> _askedToLead(BuildContext context, QuestionScoped model) async {
+  Future<Null> _buildResultsDialog(BuildContext context, QuestionScoped model) async {
     await showDialog(
         context: context,
         builder: (BuildContext context) {
           return new SimpleDialog(
-            title: const Text('Select assignment'),
+            title: const Text('Quiz Results'),
             children: <Widget>[
               Container(
-                  margin: EdgeInsets.all(20.0),
+                  margin: EdgeInsets.all(15.0),
                   child: Text(
                     "Correct Number: ${model.correctAnswers}",
                     style: TextStyle(fontWeight: FontWeight.w600),
                   )),
               Container(
-                margin: EdgeInsets.all(20.0),
+                margin: EdgeInsets.all(15.0),
                 child: Text(
                   "Wrong Number: ${model.wrongAnswers}",
                   style: TextStyle(fontWeight: FontWeight.w600),
@@ -129,10 +155,11 @@ class Home extends StatelessWidget {
           width: double.infinity,
           padding: EdgeInsets.all(10.0),
           decoration: BoxDecoration(
-              border: Border.all(width: 2.0, color: Colors.black54),
-              borderRadius: BorderRadius.circular(10.0),
-              color: buttonBackground(model, buttonNameID)),
-          child: answer.length < 100
+            border: Border.all(width: 2.0, color: Colors.black54),
+            borderRadius: BorderRadius.circular(10.0),
+            color: buttonBackground(model, buttonNameID),
+          ),
+          child: answer.length < 100 //Find another way!!!
               ? Container(
                   padding: EdgeInsets.symmetric(vertical: 10.0),
                   alignment: Alignment.center,
